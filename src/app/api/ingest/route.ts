@@ -18,8 +18,9 @@ export async function POST(req: Request) {
 
   const { data } = await admin().from("sheets").select("*").eq("id", body.sheetId).maybeSingle();
   const sheet = data as Sheet | null;
-  const ok = sheet?.ingest_token && token.length === sheet.ingest_token.length &&
-    timingSafeEqual(Buffer.from(token), Buffer.from(sheet.ingest_token));
+  const given = Buffer.from(token);
+  const expected = Buffer.from(sheet?.ingest_token ?? "");
+  const ok = sheet && expected.length > 0 && given.length === expected.length && timingSafeEqual(given, expected);
   if (!ok) return json({ error: "unauthorized" }, 401);
 
   const { header, rows, firstRow } = body;

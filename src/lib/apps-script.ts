@@ -1,11 +1,15 @@
 // The Google Apps Script a sheet owner pastes into Extensions → Apps Script. Filled in per sheet on /setup/script/[id].
-export function appsScript(opts: { endpoint: string; sheetId: string; token: string; tab: string }) {
+export function appsScript(opts: {
+  endpoint: string; sheetId: string; token: string; tab: string; spreadsheetId: string; vercelBypass?: string;
+}) {
   return `// Sheet Leads push for tab "${opts.tab}". Run setup() once; it then sends new rows every 5 minutes.
 const CONFIG = {
   ENDPOINT: ${JSON.stringify(opts.endpoint)},
   SHEET_ID: ${JSON.stringify(opts.sheetId)},
   TOKEN: ${JSON.stringify(opts.token)}, // secret: don't share this script
   TAB: ${JSON.stringify(opts.tab)},
+  SPREADSHEET_ID: ${JSON.stringify(opts.spreadsheetId)}, // only runs inside this exact spreadsheet
+  VERCEL_BYPASS: ${JSON.stringify(opts.vercelBypass ?? "")}, // lets the push through Vercel Deployment Protection
 };
 const BATCH = 500;
 
@@ -21,7 +25,11 @@ function pushNewLeads() {
   const lock = LockService.getScriptLock();
   if (!lock.tryLock(10000)) return; // previous run still busy
   try {
-    const sheet = SpreadsheetApp.getActive().getSheetByName(CONFIG.TAB);
+    const book = SpreadsheetApp.getActive();
+    if (book.getId() !== CONFIG.SPREADSHEET_ID) {
+      throw new Error("This script belongs to another spreadsheet. Copy this sheet's own script from Setup → Auto-push.");
+    }
+    const sheet = book.getSheetByName(CONFIG.TAB);
     if (!sheet) throw new Error('Tab "' + CONFIG.TAB + '" not found');
     const props = PropertiesService.getScriptProperties();
     const lastRow = sheet.getLastRow();
@@ -37,7 +45,10 @@ function pushNewLeads() {
       const res = UrlFetchApp.fetch(CONFIG.ENDPOINT, {
         method: "post",
         contentType: "application/json",
-        headers: { Authorization: "Bearer " + CONFIG.TOKEN },
+        headers: Object.assign(
+          { Authorization: "Bearer " + CONFIG.TOKEN },
+          CONFIG.VERCEL_BYPASS ? { "x-vercel-protection-bypass": CONFIG.VERCEL_BYPASS } : {}
+        ),
         payload: JSON.stringify({ sheetId: CONFIG.SHEET_ID, header: header, rows: rows, firstRow: sent + 1 }),
         muteHttpExceptions: true,
       });

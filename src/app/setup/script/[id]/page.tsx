@@ -18,7 +18,12 @@ export default async function ScriptPage({ params }: { params: Promise<{ id: str
   const proto = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
   const endpoint = `${proto}://${host}/api/ingest`;
   const isLocal = /^(localhost|127\.|\[::1\])/.test(host);
-  const code = appsScript({ endpoint, sheetId: sheet.id, token: sheet.ingest_token, tab: sheet.tab_name });
+  // Vercel exposes this when Settings → Deployment Protection → Protection Bypass for Automation is enabled.
+  const vercelBypass = process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
+  const code = appsScript({
+    endpoint, sheetId: sheet.id, token: sheet.ingest_token, tab: sheet.tab_name,
+    spreadsheetId: sheet.spreadsheet_id, vercelBypass,
+  });
 
   return (
     <div className="space-y-6">
@@ -33,6 +38,12 @@ export default async function ScriptPage({ params }: { params: Promise<{ id: str
       {isLocal && (
         <p className="rounded-md bg-amber-50 px-4 py-2 text-sm text-amber-800">
           You&apos;re on {host}. Google can&apos;t reach localhost: open this page on your deployed (Vercel) URL and copy the script from there.
+        </p>
+      )}
+      {!isLocal && process.env.VERCEL && !vercelBypass && (
+        <p className="rounded-md bg-amber-50 px-4 py-2 text-sm text-amber-800">
+          If Vercel Deployment Protection is on, enable <b>Protection Bypass for Automation</b> (Vercel → Settings →
+          Deployment Protection), redeploy, and copy the script again. Otherwise Google&apos;s pushes get blocked.
         </p>
       )}
       {!sheet.mapping && (
