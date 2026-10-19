@@ -103,6 +103,7 @@ export default async function Setup({ searchParams }: { searchParams: Promise<{ 
               <button className={btnGhost}>Save</button>
             </form>
             <Link href={`/setup/map/${s.id}`} className={`${btnGhost} inline-flex items-center`}>Map fields</Link>
+            <Link href={`/setup/script/${s.id}`} className={`${btnGhost} inline-flex items-center`}>Auto-push</Link>
             <form action={syncNow}><input type="hidden" name="id" value={s.id} /><button className={btnGhost}>Sync now</button></form>
             <form action={removeSheet}><input type="hidden" name="id" value={s.id} /><button className={`${btnGhost} text-red-600`}>Remove</button></form>
           </div>

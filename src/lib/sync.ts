@@ -40,6 +40,18 @@ export async function syncSheet(sheet: Sheet) {
   }
 }
 
+// Apps Script push: the sheet sends its header + only the new rows (starting at sheet row firstRow).
+export async function ingestRows(sheet: Sheet, header: string[], rows: string[][], firstRow: number) {
+  try {
+    const { header: clean, leads } = parseRows([header, ...rows], sheet.mapping ?? {}, firstRow);
+    const inserted = await upsertChunks(withSheet(sheet, leads), true);
+    await admin().from("sheets").update({ header: clean, last_synced_at: new Date().toISOString(), last_error: null }).eq("id", sheet.id);
+    return inserted;
+  } catch (err) {
+    return fail(sheet, err);
+  }
+}
+
 // Saves a new mapping and re-applies it to leads already imported from this sheet.
 export async function remapSheet(sheet: Sheet, mapping: Mapping) {
   const db = admin();
