@@ -34,4 +34,6 @@ const mapped = parseRows(
 assert.equal(mapped.leads[0].name, "Kiran");
 assert.equal(mapped.leads[0].phone, "98000");
 assert.equal(mapped.leads[0].row_key, "row:2", "row_key unmapped → row number");
+// pushed slice: row-number keys match a whole-tab read
+assert.equal(parseRows([["name"], ["Zed"]], {}, 40).leads[0].row_key, "row:40");
 console.log("parse ok");

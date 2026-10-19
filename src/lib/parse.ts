@@ -38,7 +38,11 @@ export type ParsedLead = {
   campaign: string | null; form: string | null; lead_created_at: string | null; data: Record<string, string>;
 };
 
-export function parseRows(values: string[][], mapping: Mapping = {}): { header: string[]; leads: ParsedLead[] } {
+// values[0] is the header row; firstRow is the sheet row number of values[1] (2 for a whole-tab read,
+// higher when only new rows are pushed by the Apps Script) so the row-number fallback key stays the same.
+export function parseRows(
+  values: string[][], mapping: Mapping = {}, firstRow = 2,
+): { header: string[]; leads: ParsedLead[] } {
   const [rawHeader = [], ...rows] = values;
   const header = cleanHeader(rawHeader);
   const guess = guessMapping(header);
@@ -56,7 +60,7 @@ export function parseRows(values: string[][], mapping: Mapping = {}): { header: 
     const createdDate = created ? new Date(created) : null;
     leads.push({
       // Lead id stays stable if rows get re-sorted; sheet row number is the fallback.
-      row_key: cell("row_key") ?? `row:${i + 2}`,
+      row_key: cell("row_key") ?? `row:${firstRow + i}`,
       name: cell("name"),
       phone: cell("phone"),
       email: cell("email")?.toLowerCase() ?? null,

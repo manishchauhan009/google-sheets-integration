@@ -1,4 +1,4 @@
--- Sheet Leads prototype schema (fresh project). Existing databases: run 002_projects.sql, then 003_field_mapping.sql.
+-- Sheet Leads prototype schema (fresh project). Existing databases: run 002_projects.sql, 003_field_mapping.sql, 004_ingest_token.sql in order.
 
 create table if not exists projects (
   id uuid primary key default gen_random_uuid(),
@@ -14,6 +14,7 @@ create table if not exists sheets (
   title text,
   header jsonb,
   mapping jsonb, -- column → lead field; null = not mapped yet (not synced), {} = automatic guess
+  ingest_token uuid not null default gen_random_uuid(), -- secret for this sheet's Apps Script push
   last_synced_at timestamptz,
   last_error text,
   created_at timestamptz not null default now(),

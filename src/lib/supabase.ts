@@ -4,7 +4,7 @@ import type { Mapping } from "./parse";
 export type Project = { id: string; name: string; created_at: string };
 export type Sheet = {
   id: string; project_id: string | null; spreadsheet_id: string; tab_name: string; title: string | null;
-  header: string[] | null; mapping: Mapping | null; last_synced_at: string | null; last_error: string | null; created_at: string;
+  header: string[] | null; mapping: Mapping | null; ingest_token: string; last_synced_at: string | null; last_error: string | null; created_at: string;
 };
 export type Lead = {
   id: string; sheet_id: string; project_id: string | null; row_key: string;
